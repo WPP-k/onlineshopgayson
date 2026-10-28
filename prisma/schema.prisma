@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  image    String?
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String?  @unique
+  name        String
+  description String?
+  price       Float
+  costPrice   Float?
+  image       String   
+  stock       Int      @default(0)
+  minStock    Int      @default(5)
+  status      String   @default("ACTIVE")
+  
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  
+  productCode String?  // รหัสสินค้า เช่น 20056698
+  unit        String?   @default("PC") // หน่วยนับ เช่น PC, PAC
+  toteCode    String?  // รหัส Tote เช่น TG2101003090
+  promotion   Promotion?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Admin {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  name          String?
+  password      String
+  plainPassword String?
+  phone         String?
+  address       String?
+  role          String   @default("ADMIN")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  name          String?
+  password      String
+  plainPassword String?
+  address       String?
+  phone         String?
+  role          String   @default("USER") 
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String?
+  user            User?       @relation(fields: [userId], references: [id])
+  totalAmount     Float
+  status          String      @default("PENDING") // PENDING, PAID, SHIPPED, DELIVERED
+  deliveryType    String?     @default("DELIVERY") // DELIVERY, PICKUP
+  customerName    String?
+  customerPhone   String?
+  shippingAddress String?
+  latitude        Float?
+  longitude       Float?
+  paymentMethod   String?     @default("CASH") // CASH, COD, CASH_STORE, PROMPTPAY, TRANSFER
+  pickupTime      String?
+  notes           String?
+  
+  // Payment Verification fields
+  slipImage           String?     // รูปภาพสลิปโอนเงิน (Base64 หรือ URL)
+  slipUploadedAt      DateTime?   // วันเวลาที่แนบสลิป
+  paymentVerifiedAt   DateTime?   // วันเวลาที่แอดมินยืนยันยอดเงิน
+  paymentVerifiedBy   String?     // แอดมินผู้ยืนยัน
+  paymentRejectReason String?     // เหตุผลกรณีปฏิเสธสลิป
+
+  riderId         String?
+  rider           Rider?      @relation(fields: [riderId], references: [id])
+  deliveryStatus  String?     @default("PENDING") // PENDING, ASSIGNED, DELIVERING, DELIVERED, CANCELLED
+  deliveredAt     DateTime?
+
+  // Delivery Area fields
+  distanceKm      Float?      // ระยะทางจากร้านค้า (กม.)
+  subdistrict     String?     // ตำบลที่จัดส่ง
+  discountAmount  Float?      @default(0.0) // ยอดส่วนลดโปรโมชัน
+
+  // Customer Receipt Confirmation
+  customerReceivedStatus String?   // RECEIVED, NOT_RECEIVED
+  customerConfirmedAt    DateTime? // วันเวลาที่ลูกค้ายืนยัน
+  customerFeedback       String?   // ความคิดเห็นหรือเหตุผลกรณีระบุว่ายังไม่ได้รับ
+
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Rider {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String   @unique
+  vehicle       String?
+  status        String   @default("AVAILABLE") // AVAILABLE, BUSY, OFFLINE
+  rating        Float    @default(5.0)
+  completedJobs Int      @default(0)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  orders        Order[]
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id])
+  productId   String
+  productName String
+  quantity    Int
+  price       Float
+}
+
+model Tote {
+  id          String     @id @default(cuid())
+  code        String     @unique // e.g. TG2101003090
+  status      String     @default("PENDING") // PENDING, COMPLETED
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  items       ToteItem[]
+}
+
+model ToteItem {
+  id          String   @id @default(cuid())
+  toteId      String
+  tote        Tote     @relation(fields: [toteId], references: [id], onDelete: Cascade)
+  itemSeq     Int      @default(1) // ลำดับ
+  name        String   // รายการสินค้า
+  productCode String   // รหัสสินค้า เช่น 20056698
+  barcode     String   // บาร์โค้ด เช่น 8850086169908
+  quantity    Int      @default(1) // จำนวนตามใบ
+  receivedQty Int      @default(0) // จำนวนที่สแกนรับจริง
+  unit        String   @default("PC") // หน่วย เช่น PC, PAC
+  isVerified  Boolean  @default(false)
+  productId   String?  // เชื่อมกับ Product ในระบบ (ถ้ามี)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+model Banner {
+  id        String   @id @default(cuid())
+  image     String   
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Unit {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DeliverySetting {
+  id                  String   @id @default("default")
+  enabled             Boolean  @default(true) // เปิด/ปิดการจำกัดพื้นที่
+  maxDistanceKm       Float    @default(10.0) // ระยะทางสูงสุด (กม.)
+  storeLat            Float    @default(18.564567) // พิกัดร้าน ละติจูด (บ้านป่าเวียง ต.ทุ่งกว๋าว อ.เมืองปาน)
+  storeLng            Float    @default(99.458904) // พิกัดร้าน ลองจิจูด
+  storeAddress        String   @default("33 หมู่ 11 บ้านป่าเวียง ต.ทุ่งกว๋าว อ.เมืองปาน ลำปาง 52240")
+  storePhone          String   @default("089-851-0807")
+  allowedSubdistricts String   @default("ทุ่งกว๋าว,เมืองปาน,บ้านขอ,หัวเมือง,แจ้ซ้อน,บ้านค่า,บ้านสา,บ้านเป้า,บ้านเอื้อม") // รายชื่อตำบลที่จัดส่งได้
+  minOrderAmount      Float    @default(0.0) // ยอดสั่งซื้อขั้นต่ำ
+  deliveryFee         Float    @default(0.0) // ค่าจัดส่งเริ่มต้น (0 = ส่งฟรี)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model Promotion {
+  id              String    @id @default(cuid())
+  name            String    // ชื่อโปรโมชัน เช่น "ซื้อ 1 แถม 1 สุดคุ้ม"
+  type            String    // "BUY_1_GET_1", "BUY_2_GET_1", "DISCOUNT"
+  discountPrice   Float?    // ราคาพิเศษสำหรับ DISCOUNT เช่น 69.0
+  discountPercent Float?    // เปอร์เซ็นต์ส่วนลด (ถ้ามี)
+  badgeText       String?   // ข้อความสั้นแสดงบนป้าย เช่น "ซื้อ 1 แถม 1", "ลด ฿30", "ซื้อ 2 แถม 1"
+  description     String?   // คำอธิบายโปรโมชัน
+  isActive        Boolean   @default(true) // เปิด/ปิดการใช้งานโปรโมชัน
+  startDate       DateTime?
+  endDate         DateTime?
+
+  productId       String    @unique
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+

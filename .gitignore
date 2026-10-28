@@ -39,3 +39,47 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
+
+# database
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# temporary archives, scripts & extracted thesis docs
+*.zip
+*.docx
+*.pdf
+*.html
+*.bak
+/docx_extracted/
+/bee_extracted/
+/v4_extracted/
+/bee_paras.txt
+/v4_paras.txt
+/extracted_all_paras.txt
+/ตัวอย่างเล่มโครงงาน/
+/รูปหน้าร้านค้า/
+/รูปร้านค้า/
+/flowcharts/
+/img/
+categorize_images.js
+analyze_*.js
+check_*.js
+extract*.ps1
+extract*.js
+generate_*.ts
+generate_*.js
+get_*.js
+inspect_*.js
+map_*.js
+mapped_*.json
+scratch*
+test.mjs
+
+# AI agent & IDE caches
+.agents/
+.claude/
+.windsurf/

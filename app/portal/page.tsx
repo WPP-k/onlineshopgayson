@@ -12,7 +12,8 @@ import {
   Package, 
   Smartphone,
   Sparkles,
-  Info
+  Info,
+  Tablet
 } from "lucide-react";
 
 export const metadata = {
@@ -260,15 +261,15 @@ export default function PortalPage() {
         </div>
 
         {/* Secondary Services Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
           {/* Card 4: Live Tracking */}
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 flex items-center justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-lg">
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-lg shrink-0">
                 📦
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900">ระบบติดตามสถานะพัสดุ (Live Track)</h3>
+                <h3 className="text-sm font-bold text-gray-900">ติดตามพัสดุ (Live Track)</h3>
                 <p className="text-xs text-gray-500 font-mono">localhost:3000/track</p>
               </div>
             </div>
@@ -276,7 +277,7 @@ export default function PortalPage() {
               href="http://localhost:3000/track"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
+              className="w-full px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors"
             >
               <span>เปิดแท็บติดตาม</span>
               <ExternalLink className="w-3 h-3" />
@@ -284,13 +285,13 @@ export default function PortalPage() {
           </div>
 
           {/* Card 5: Handheld */}
-          <div className="bg-white p-5 rounded-2xl border border-gray-200 flex items-center justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-lg">
+          <div className="bg-white p-5 rounded-2xl border border-gray-200 flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-lg shrink-0">
                 📱
               </div>
               <div>
-                <h3 className="text-sm font-bold text-gray-900">เครื่องสแกนบาร์โค้ดคลังสินค้า (Handheld)</h3>
+                <h3 className="text-sm font-bold text-gray-900">สแกนบาร์โค้ด (Handheld)</h3>
                 <p className="text-xs text-gray-500 font-mono">localhost:3000/handheld</p>
               </div>
             </div>
@@ -298,9 +299,36 @@ export default function PortalPage() {
               href="http://localhost:3000/handheld"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
+              className="w-full px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors"
             >
               <span>เปิดแท็บ Handheld</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          {/* Card 6: Store Fulfillment (iPad / posadmin) */}
+          <div className="bg-white p-5 rounded-2xl border-2 border-amber-300/80 bg-gradient-to-b from-amber-50/30 to-white flex flex-col justify-between hover:shadow-md transition-shadow shadow-xs">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
+                <Tablet className="w-5 h-5 text-slate-950" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-sm font-black text-gray-900">จอ iPad หน้าร้าน</h3>
+                  <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded font-mono">
+                    posadmin
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 font-mono">localhost:3000/store/fulfillment</p>
+              </div>
+            </div>
+            <a
+              href="http://localhost:3000/store/fulfillment"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+            >
+              <span>เปิดจอ iPad FULFILLMENT</span>
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>

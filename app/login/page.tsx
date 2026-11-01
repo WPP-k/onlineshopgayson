@@ -59,8 +59,16 @@ function LoginForm() {
       if (data.success) {
         setUser(data.user);
 
-        // If user is Admin or redirect was explicitly set to /admin, go to admin
-        if (data.user.role === "ADMIN" || redirectParam.startsWith("/admin")) {
+        // Check if username is posadmin or designated pos account
+        const isPosAdmin = 
+          data.user.username?.toLowerCase() === "posadmin" || 
+          username.trim().toLowerCase() === "posadmin" ||
+          data.redirectUrl === "/store/fulfillment";
+
+        if (isPosAdmin) {
+          // บัญชี posadmin เจ้าของร้านจะเข้าสู่หน้าจอ iPad หน้าร้านโดยตรง
+          window.location.href = "/store/fulfillment";
+        } else if (data.user.role === "ADMIN" || redirectParam.startsWith("/admin")) {
           window.location.href = redirectParam || "/admin";
         } else {
           window.location.href = redirectParam || "/";
@@ -237,6 +245,24 @@ function LoginForm() {
               )}
             </button>
           </form>
+
+          {/* Quick Helper for POS/iPad Mode */}
+          <div className="bg-amber-50/70 border border-amber-200/80 rounded-xl p-2.5 text-[11px] text-amber-900 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <span>📱</span>
+              <span>เข้าสู่ระบบด้วยไอดี <strong>posadmin</strong> จะเปิดหน้าจอ iPad หน้าร้านทันที</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setUsername("posadmin");
+                setPassword("123456789");
+              }}
+              className="text-[10px] font-bold text-amber-900 bg-amber-200/70 hover:bg-amber-300 px-2 py-0.5 rounded cursor-pointer transition-colors shrink-0 ml-2"
+            >
+              กรอกอัตโนมัติ
+            </button>
+          </div>
 
           {/* Divider */}
           <div className="relative my-4">

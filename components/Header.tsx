@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Search, ShoppingCart, CheckCircle2, ChevronDown, ShoppingBag, ShieldCheck, LogOut, Truck, MessageCircle } from "lucide-react";
+import { User, Search, ShoppingCart, CheckCircle2, ChevronDown, ShoppingBag, ShieldCheck, LogOut, Truck, MessageCircle, Tablet } from "lucide-react";
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -121,7 +121,7 @@ export function Header() {
                       </span>
                       {user.role === 'ADMIN' && (
                         <span className="text-[9px] bg-red-900 text-red-100 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
-                          Admin
+                          {user.username?.toLowerCase() === 'posadmin' ? 'POS / IPAD' : 'Admin'}
                         </span>
                       )}
                     </div>
@@ -201,16 +201,27 @@ export function Header() {
                         <span>แชทกับร้าน</span>
                       </button>
 
-                      {/* Menu 5 (Admin Only) */}
+                      {/* Menu 5 (Admin & POS Options) */}
                       {user.role === 'ADMIN' && (
-                        <Link
-                          href="/admin"
-                          onClick={() => setIsUserDropdownOpen(false)}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-[#b90000] bg-red-50/80 hover:bg-red-100 rounded-xl transition-colors"
-                        >
-                          <ShieldCheck className="w-4 h-4 text-[#b90000]" />
-                          <span>จัดการระบบหลังบ้าน (Admin)</span>
-                        </Link>
+                        <>
+                          <Link
+                            href="/store/fulfillment"
+                            onClick={() => setIsUserDropdownOpen(false)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 rounded-xl transition-colors"
+                          >
+                            <Tablet className="w-4 h-4 text-amber-600" />
+                            <span>จอหน้าร้าน / iPad FULFILLMENT</span>
+                          </Link>
+
+                          <Link
+                            href="/admin"
+                            onClick={() => setIsUserDropdownOpen(false)}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-bold text-[#b90000] bg-red-50/80 hover:bg-red-100 rounded-xl transition-colors"
+                          >
+                            <ShieldCheck className="w-4 h-4 text-[#b90000]" />
+                            <span>จัดการระบบหลังบ้าน (Admin)</span>
+                          </Link>
+                        </>
                       )}
                     </div>
 

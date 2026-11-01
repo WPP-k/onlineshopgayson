@@ -14,7 +14,13 @@ export async function POST(request: Request) {
     }
 
     // 1. Check if it's an Admin
-    const admin = await prisma.admin.findUnique({ where: { username } });
+    let admin = await prisma.admin.findUnique({ where: { username } });
+    if (!admin) {
+      // Case-insensitive fallback for SQLite
+      const allAdmins = await prisma.admin.findMany();
+      admin = allAdmins.find((a) => a.username.toLowerCase() === username.trim().toLowerCase()) || null;
+    }
+
     if (admin) {
       const isMatch = await bcrypt.compare(password, admin.password);
       if (isMatch) {
@@ -24,8 +30,13 @@ export async function POST(request: Request) {
           { expiresIn: '7d' }
         );
 
+        // Determine destination: if username is posadmin or starts with pos -> direct to store's iPad fulfillment screen
+        const isPosAdmin = admin.username.toLowerCase() === "posadmin" || admin.username.toLowerCase().startsWith("pos");
+        const redirectUrl = isPosAdmin ? "/store/fulfillment" : "/admin";
+
         const response = NextResponse.json({
           success: true,
+          redirectUrl,
           user: { id: admin.id, name: admin.name || "Administrator", username: admin.username, role: "ADMIN" }
         });
 

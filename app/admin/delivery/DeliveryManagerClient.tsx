@@ -550,7 +550,7 @@ export function DeliveryManagerClient({ initialRiders, initialOrders, initialSet
       {activeTab === "map" && (
         <div className="pt-2">
           <CustomerRadiusMapWrapper
-            orders={orders}
+            orders={orders as any}
             storeLat={setting.storeLat}
             storeLng={setting.storeLng}
             storeName="ร้านเกษรบ้านป่าเวียง"

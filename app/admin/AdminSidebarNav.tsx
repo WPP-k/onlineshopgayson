@@ -17,6 +17,7 @@ import {
   Tablet,
   AlertTriangle,
   Tag,
+  MessageCircle,
 } from "lucide-react";
 
 function SidebarNavContent() {
@@ -26,6 +27,22 @@ function SidebarNavContent() {
 
   const isProductsActive = pathname.startsWith("/admin/products");
   const [isProductsOpen, setIsProductsOpen] = useState(true);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/admin/chat/unread-count");
+        if (res.ok) {
+          const data = await res.json();
+          setUnreadChatCount(data.unreadCount || 0);
+        }
+      } catch (e) {}
+    };
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 8000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Keep dropdown open if on products page
   useEffect(() => {
@@ -60,6 +77,26 @@ function SidebarNavContent() {
       >
         <ShoppingCart className="w-5 h-5 shrink-0" />
         <span>จัดการคำสั่งซื้อ</span>
+      </Link>
+
+      {/* 2.1 แชทกับลูกค้า (Live Chat) */}
+      <Link
+        href="/admin/chat"
+        className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+          pathname.startsWith("/admin/chat")
+            ? "bg-red-900 text-white font-semibold shadow-inner"
+            : "text-red-100 hover:bg-red-800 hover:text-white"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <MessageCircle className="w-5 h-5 shrink-0 text-amber-300" />
+          <span>แชทกับลูกค้า</span>
+        </div>
+        {unreadChatCount > 0 && (
+          <span className="bg-amber-400 text-amber-950 font-black text-xs px-2 py-0.5 rounded-full shadow-2xs animate-bounce">
+            {unreadChatCount}
+          </span>
+        )}
       </Link>
 
       {/* 3. จัดการสินค้า (Dropdown Menu แบ่งเป็น เพิ่มสินค้าใหม่ & รายการสินค้า) */}

@@ -3,8 +3,8 @@ import { prisma } from "@/lib/prisma";
 import TrackClient from "../TrackClient";
 
 export const metadata = {
-  title: "รายละเอียดการติดตามสินค้า | ร้านเกษรบ้านป่าเวียง",
-  description: "ติดตามสถานะการจัดส่งพัสดุแบบเรียลไทม์ ร้านเกษรบ้านป่าเวียง",
+  title: "รายละเอียดการติดตามสินค้า",
+  description: "ติดตามสถานะการจัดส่งพัสดุแบบเรียลไทม์ onlineshop",
 };
 
 interface Props {

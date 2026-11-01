@@ -4,6 +4,7 @@ import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { CartFloatingBar } from "@/components/CartFloatingBar";
 import { AuthRequiredModal } from "@/components/AuthRequiredModal";
+import { ChatWidget } from "@/components/ChatWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,10 +18,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | ร้านเกษรบ้านป่าเวียง",
-    default: "🛒 [ลูกค้า] ร้านเกษรบ้านป่าเวียง - ร้านค้าออนไลน์",
+    template: "%s | onlineshop",
+    default: "onlineshop",
   },
-  description: "ร้านเกษรบ้านป่าเวียง สินค้าคุณภาพ สั่งซื้อง่าย จัดส่งรวดเร็ว ต.ทุ่งกว๋าว อ.เมืองปาน จ.ลำปาง",
+  description: "onlineshop สินค้าคุณภาพ สั่งซื้อง่าย จัดส่งรวดเร็ว",
 };
 
 export default function RootLayout({
@@ -37,6 +38,7 @@ export default function RootLayout({
         
         <CartFloatingBar />
         <AuthRequiredModal />
+        <ChatWidget />
 
         {/* Only show BottomNav on mobile */}
         <div className="md:hidden">

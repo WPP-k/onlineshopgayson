@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { User, ShieldCheck, Edit, Trash2, X, Plus, Eye, EyeOff, KeyRound, Truck, Star, Phone, ExternalLink } from "lucide-react";
+import { User, ShieldCheck, Edit, Trash2, X, Plus, Eye, EyeOff, KeyRound, Truck, Star, Phone, ExternalLink, Send, Copy, Check, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { updateUser, createUser, deleteUser, updateAdmin, createAdmin, deleteAdmin } from "./actions";
 import { createRider, updateRiderInfo, updateRiderStatus, deleteRider } from "@/app/admin/delivery/actions";
@@ -24,7 +24,11 @@ export interface RiderItem {
   id: string;
   name: string;
   phone: string;
+  username?: string | null;
+  plainPassword?: string | null;
   vehicle: string | null;
+  vehicleType?: string | null;
+  plateNumber?: string | null;
   status: string;
   rating: number;
   completedJobs: number;
@@ -59,6 +63,7 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
   // Password visibility maps
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [visibleAdminPasswords, setVisibleAdminPasswords] = useState<Record<string, boolean>>({});
+  const [visibleRiderPasswords, setVisibleRiderPasswords] = useState<Record<string, boolean>>({});
 
   // Toggle password view for a user row
   const togglePasswordVisibility = (userId: string) => {
@@ -73,6 +78,14 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
     setVisibleAdminPasswords((prev) => ({
       ...prev,
       [adminId]: !prev[adminId],
+    }));
+  };
+
+  // Toggle password view for a rider row
+  const toggleRiderPasswordVisibility = (riderId: string) => {
+    setVisibleRiderPasswords((prev) => ({
+      ...prev,
+      [riderId]: !prev[riderId],
     }));
   };
 
@@ -91,6 +104,23 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
   const [editAdminPassword, setEditAdminPassword] = useState("");
   const [editAdminName, setEditAdminName] = useState("");
   const [showEditAdminPassword, setShowEditAdminPassword] = useState(false);
+
+  // Invite vs Direct states
+  const [adminAddMode, setAdminAddMode] = useState<"INVITE" | "DIRECT">("INVITE");
+  const [riderAddMode, setRiderAddMode] = useState<"INVITE" | "DIRECT">("INVITE");
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCopyInviteLink = (type: "admin" | "rider") => {
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const url = `${origin}/register/${type}?invite=${type.toUpperCase()}_INVITE`;
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    } else {
+      prompt("คัดลอกลิงก์การสมัครนี้เพื่อส่งต่อ:", url);
+    }
+  };
 
   // Open Edit User
   const handleOpenEdit = (user: UserItem) => {
@@ -231,7 +261,11 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
   const [isAddingRider, setIsAddingRider] = useState(false);
   const [editRiderName, setEditRiderName] = useState("");
   const [editRiderPhone, setEditRiderPhone] = useState("");
-  const [editRiderVehicle, setEditRiderVehicle] = useState("");
+  const [editRiderUsername, setEditRiderUsername] = useState("");
+  const [editRiderPassword, setEditRiderPassword] = useState("");
+  const [showEditRiderPassword, setShowEditRiderPassword] = useState(false);
+  const [editRiderVehicleType, setEditRiderVehicleType] = useState("รถจักรยานยนต์ (มอเตอร์ไซค์)");
+  const [editRiderPlateNumber, setEditRiderPlateNumber] = useState("");
   const [editRiderStatus, setEditRiderStatus] = useState("AVAILABLE");
 
   // Open Edit Rider
@@ -239,7 +273,11 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
     setEditingRider(rider);
     setEditRiderName(rider.name);
     setEditRiderPhone(rider.phone);
-    setEditRiderVehicle(rider.vehicle || "");
+    setEditRiderUsername(rider.username || "");
+    setEditRiderPassword(rider.plainPassword || "");
+    setShowEditRiderPassword(false);
+    setEditRiderVehicleType(rider.vehicleType || "รถจักรยานยนต์ (มอเตอร์ไซค์)");
+    setEditRiderPlateNumber(rider.plateNumber || "");
     setEditRiderStatus(rider.status);
   };
 
@@ -253,7 +291,10 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
     formData.set("id", editingRider.id);
     formData.set("name", editRiderName);
     formData.set("phone", editRiderPhone);
-    formData.set("vehicle", editRiderVehicle);
+    formData.set("username", editRiderUsername);
+    formData.set("password", editRiderPassword);
+    formData.set("vehicleType", editRiderVehicleType);
+    formData.set("plateNumber", editRiderPlateNumber);
     formData.set("status", editRiderStatus);
 
     const res = await updateRiderInfo(formData);
@@ -263,6 +304,10 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
       alert("เกิดข้อผิดพลาด: " + res.error);
     } else {
       alert("บันทึกข้อมูลพนักงานส่งสินค้าเรียบร้อยแล้ว");
+      const combinedVehicle = editRiderPlateNumber
+        ? `${editRiderVehicleType} (${editRiderPlateNumber})`
+        : editRiderVehicleType;
+
       setRiders((prev) =>
         prev.map((r) =>
           r.id === editingRider.id
@@ -270,7 +315,11 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
                 ...r,
                 name: editRiderName,
                 phone: editRiderPhone,
-                vehicle: editRiderVehicle,
+                username: editRiderUsername,
+                plainPassword: editRiderPassword,
+                vehicleType: editRiderVehicleType,
+                plateNumber: editRiderPlateNumber,
+                vehicle: combinedVehicle,
                 status: editRiderStatus,
               }
             : r
@@ -337,21 +386,27 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
 
         {activeTab === "riders" && (
           <button
-            onClick={() => setIsAddingRider(true)}
+            onClick={() => {
+              setRiderAddMode("INVITE");
+              setIsAddingRider(true);
+            }}
             className="inline-flex items-center gap-2 bg-[#b90000] hover:bg-red-800 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>เพิ่มพนักงานส่ง</span>
+            <Send className="w-4 h-4" />
+            <span>ส่งลิงก์สมัคร Rider</span>
           </button>
         )}
 
         {activeTab === "admins" && (
           <button
-            onClick={() => setIsAddingAdmin(true)}
+            onClick={() => {
+              setAdminAddMode("INVITE");
+              setIsAddingAdmin(true);
+            }}
             className="inline-flex items-center gap-2 bg-[#b90000] hover:bg-red-800 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all shadow-sm cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>เพิ่มผู้ดูแลระบบใหม่</span>
+            <Send className="w-4 h-4" />
+            <span>ส่งลิงก์สมัคร Admin</span>
           </button>
         )}
       </div>
@@ -545,6 +600,8 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <th className="p-4">พนักงานส่งสินค้า</th>
+                    <th className="p-4">ไอดีเข้าใช้ (Username)</th>
+                    <th className="p-4">รหัสผ่าน (Password)</th>
                     <th className="p-4">เบอร์โทรศัพท์</th>
                     <th className="p-4">ยานพาหนะ / ทะเบียน</th>
                     <th className="p-4">สถานะการทำงาน</th>
@@ -573,6 +630,36 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
                           </div>
                         </td>
 
+                        <td className="p-4 font-mono font-medium text-gray-800">
+                          {r.username ? `@${r.username}` : <span className="text-gray-400 italic">ไม่ได้ตั้งค่า</span>}
+                        </td>
+
+                        <td className="p-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-gray-700">
+                              {visibleRiderPasswords[r.id]
+                                ? (r.plainPassword || "••••••••")
+                                : "••••••••"}
+                            </span>
+                            {r.plainPassword ? (
+                              <button
+                                type="button"
+                                onClick={() => toggleRiderPasswordVisibility(r.id)}
+                                className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                                title={visibleRiderPasswords[r.id] ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                              >
+                                {visibleRiderPasswords[r.id] ? (
+                                  <EyeOff className="w-3.5 h-3.5" />
+                                ) : (
+                                  <Eye className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 text-[11px] italic">ไม่มี</span>
+                            )}
+                          </div>
+                        </td>
+
                         <td className="p-4 font-mono text-gray-700">
                           <span className="flex items-center gap-1">
                             <Phone className="w-3.5 h-3.5 text-gray-400" />
@@ -580,8 +667,15 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
                           </span>
                         </td>
 
-                        <td className="p-4 text-gray-600 font-medium">
-                          {r.vehicle || "ไม่ได้ระบุพาหนะ"}
+                        <td className="p-4 text-gray-700 font-medium">
+                          <div className="flex flex-col gap-0.5">
+                            <span>{r.vehicleType || r.vehicle || "ไม่ได้ระบุ"}</span>
+                            {r.plateNumber && (
+                              <span className="text-[11px] text-[#b90000] font-mono font-bold bg-red-50 w-fit px-1.5 py-0.5 rounded border border-red-100">
+                                {r.plateNumber}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         <td className="p-4">
@@ -1072,85 +1166,186 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
       {/* Modal: Add New Admin */}
       {isAddingAdmin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-red-100 text-[#b90000] flex items-center justify-center">
-                  <Plus className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-red-100 text-[#b90000] flex items-center justify-center shadow-xs">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  เพิ่มผู้ดูแลระบบใหม่ (Admin)
-                </h3>
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900 leading-tight">
+                    เพิ่มผู้ดูแลระบบ (Admin)
+                  </h3>
+                  <p className="text-[11px] text-gray-500">
+                    เลือกส่งลิงก์ให้ผู้สมัครกรอกเอง หรือ แอดมินกรอกเข้าระบบโดยตรง
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddingAdmin(false)}
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-200 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleCreateAdminSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  ไอดี Admin (Username) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  required
-                  placeholder="กรอกไอดีผู้ดูแลระบบ (Username)"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
-                <span className="text-xs text-gray-400 mt-0.5 block">ไอดีสำหรับใช้ล็อกอินเข้าสู่ระบบจัดการร้านค้า</span>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  รหัสผ่าน (Password) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="password"
-                  required
-                  placeholder="กรอกรหัสผ่านเริ่มต้น"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ชื่อผู้ดูแลระบบ / ตำแหน่ง
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="กรอกชื่อหรือตำแหน่งผู้ดูแลระบบ"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+            {/* Mode Switch Tabs */}
+            <div className="p-4 pb-0 bg-gray-50/50">
+              <div className="grid grid-cols-2 gap-2 bg-gray-200/70 p-1 rounded-2xl text-xs font-bold">
                 <button
                   type="button"
-                  onClick={() => setIsAddingAdmin(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => setAdminAddMode("INVITE")}
+                  className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    adminAddMode === "INVITE"
+                      ? "bg-white text-[#b90000] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
-                  ยกเลิก
+                  <Send className="w-3.5 h-3.5" />
+                  <span>ส่งลิงก์เชิญสมัคร (แนะนำ)</span>
                 </button>
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#b90000] hover:bg-red-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  type="button"
+                  onClick={() => setAdminAddMode("DIRECT")}
+                  className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    adminAddMode === "DIRECT"
+                      ? "bg-white text-[#b90000] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
-                  {isSubmitting ? "กำลังบันทึก..." : "เพิ่ม Admin"}
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>แอดมินกรอกข้อมูลเอง</span>
                 </button>
               </div>
-            </form>
+            </div>
+
+            {/* Mode 1: Invite Link */}
+            {adminAddMode === "INVITE" ? (
+              <div className="p-6 space-y-4">
+                <div className="bg-red-50/70 border border-red-200/80 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#b90000]">
+                    <Sparkles className="w-4 h-4 fill-[#b90000]" />
+                    <span>ส่งลิงก์การสมัครให้ผู้สมัครกรอกเอง</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    เพื่อความปลอดภัย ผู้สมัครควรเป็นผู้ตั้งชื่อผู้ใช้ (Username) และกำหนดรหัสผ่านด้วยตนเอง สามารถคัดลอกลิงก์ด้านล่างเพื่อส่งต่อทาง LINE, Facebook, หรือแชทได้ทันที
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    ลิงก์สำหรับสมัครเป็น Admin:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={typeof window !== "undefined" ? `${window.location.origin}/register/admin?invite=ADMIN_INVITE` : "/register/admin?invite=ADMIN_INVITE"}
+                      className="flex-1 bg-gray-50 border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 font-mono select-all focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyInviteLink("admin")}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer ${
+                        copiedLink
+                          ? "bg-emerald-600 text-white"
+                          : "bg-[#b90000] hover:bg-red-800 text-white active:scale-95"
+                      }`}
+                    >
+                      {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      <span>{copiedLink ? "คัดลอกแล้ว!" : "คัดลอกลิงก์"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-gray-100 text-xs">
+                  <span className="text-gray-400">
+                    * เมื่อผู้สมัครลงทะเบียนเสร็จ รายชื่อจะมาแสดงในหน้านี้ทันที
+                  </span>
+                  <a
+                    href="/register/admin?invite=ADMIN_INVITE"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#b90000] font-bold hover:underline flex items-center gap-1 shrink-0 ml-2"
+                  >
+                    <span>เปิดดูหน้าฟอร์ม</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingAdmin(false)}
+                    className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Mode 2: Direct Form */
+              <form onSubmit={handleCreateAdminSubmit} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    ไอดี Admin (Username) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    required
+                    placeholder="กรอกไอดีผู้ดูแลระบบ (Username)"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                  <span className="text-xs text-gray-400 mt-0.5 block">ไอดีสำหรับใช้ล็อกอินเข้าสู่ระบบจัดการร้านค้า</span>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    รหัสผ่าน (Password) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="password"
+                    required
+                    placeholder="กรอกรหัสผ่านเริ่มต้น"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    ชื่อผู้ดูแลระบบ / ตำแหน่ง
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="กรอกชื่อหรือตำแหน่งผู้ดูแลระบบ"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingAdmin(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-[#b90000] hover:bg-red-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? "กำลังบันทึก..." : "เพิ่ม Admin ทันที"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
@@ -1180,6 +1375,42 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
 
             {/* Form */}
             <form onSubmit={handleUpdateRiderSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ไอดีผู้ใช้ Rider (Username)
+                  </label>
+                  <input
+                    type="text"
+                    value={editRiderUsername}
+                    onChange={(e) => setEditRiderUsername(e.target.value)}
+                    placeholder="เช่น rider01"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    รหัสผ่าน (Password)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showEditRiderPassword ? "text" : "password"}
+                      value={editRiderPassword}
+                      onChange={(e) => setEditRiderPassword(e.target.value)}
+                      placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน"
+                      className="w-full border border-gray-300 rounded-lg px-3.5 py-2 pr-10 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowEditRiderPassword(!showEditRiderPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                    >
+                      {showEditRiderPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   ชื่อ-นามสกุล พนักงานส่ง <span className="text-red-500">*</span>
@@ -1208,17 +1439,35 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  ยานพาหนะ / ทะเบียน
-                </label>
-                <input
-                  type="text"
-                  value={editRiderVehicle}
-                  onChange={(e) => setEditRiderVehicle(e.target.value)}
-                  placeholder="กรอกยานพาหนะและเลขทะเบียนรถ"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ยานพาหนะ (Drop-down) <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={editRiderVehicleType}
+                    onChange={(e) => setEditRiderVehicleType(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white cursor-pointer"
+                  >
+                    <option value="รถจักรยานยนต์ (มอเตอร์ไซค์)">🛵 รถจักรยานยนต์ (มอเตอร์ไซค์)</option>
+                    <option value="รถกระบะ / รถบรรทุกเล็ก">🛻 รถกระบะ / รถบรรทุกเล็ก</option>
+                    <option value="รถยนต์ส่วนบุคคล">🚗 รถยนต์ส่วนบุคคล</option>
+                    <option value="รถสามล้อ / ซาเล้ง">🛺 รถสามล้อ / ซาเล้ง</option>
+                    <option value="อื่นๆ">📦 อื่นๆ</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    ป้ายทะเบียนรถ
+                  </label>
+                  <input
+                    type="text"
+                    value={editRiderPlateNumber}
+                    onChange={(e) => setEditRiderPlateNumber(e.target.value)}
+                    placeholder="เช่น 1กข 1234 เชียงใหม่"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                </div>
               </div>
 
               <div>
@@ -1261,99 +1510,245 @@ export function UserManagerClient({ users, riders: initialRiders, admins }: Prop
       {/* Modal: Add Rider */}
       {isAddingRider && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-red-100 text-[#b90000] flex items-center justify-center font-bold text-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-red-100 text-[#b90000] flex items-center justify-center font-bold text-base shadow-xs">
                   🛵
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
-                  เพิ่มพนักงานส่งสินค้าใหม่ (Rider)
-                </h3>
+                <div>
+                  <h3 className="text-base font-extrabold text-gray-900 leading-tight">
+                    เพิ่มพนักงานส่งสินค้า (Rider)
+                  </h3>
+                  <p className="text-[11px] text-gray-500">
+                    เลือกส่งลิงก์ให้ไรเดอร์กรอกเอง หรือ แอดมินกรอกเข้าระบบโดยตรง
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddingRider(false)}
-                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer"
+                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-200 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleCreateRiderSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  ชื่อ-นามสกุล พนักงานส่ง <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  placeholder="กรอกชื่อ-นามสกุลพนักงานส่งของ"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  เบอร์โทรศัพท์ <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  required
-                  placeholder="กรอกเบอร์โทรศัพท์พนักงานส่งของ"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  ยานพาหนะ / ทะเบียน
-                </label>
-                <input
-                  type="text"
-                  name="vehicle"
-                  placeholder="กรอกยานพาหนะและเลขทะเบียนรถ"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
-                  สถานะเริ่มต้น
-                </label>
-                <select
-                  name="status"
-                  defaultValue="AVAILABLE"
-                  className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
-                >
-                  <option value="AVAILABLE">🟢 พร้อมรับงาน (Available)</option>
-                  <option value="BUSY">🟠 กำลังวิ่งงาน (Busy)</option>
-                  <option value="OFFLINE">⚪ พักงาน (Offline)</option>
-                </select>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+            {/* Mode Switch Tabs */}
+            <div className="p-4 pb-0 bg-gray-50/50">
+              <div className="grid grid-cols-2 gap-2 bg-gray-200/70 p-1 rounded-2xl text-xs font-bold">
                 <button
                   type="button"
-                  onClick={() => setIsAddingRider(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => setRiderAddMode("INVITE")}
+                  className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    riderAddMode === "INVITE"
+                      ? "bg-white text-[#b90000] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
-                  ยกเลิก
+                  <Send className="w-3.5 h-3.5" />
+                  <span>ส่งลิงก์เชิญสมัคร (แนะนำ)</span>
                 </button>
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#b90000] hover:bg-red-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  type="button"
+                  onClick={() => setRiderAddMode("DIRECT")}
+                  className={`py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    riderAddMode === "DIRECT"
+                      ? "bg-white text-[#b90000] shadow-sm"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
-                  {isSubmitting ? "กำลังบันทึก..." : "เพิ่มพนักงานส่ง"}
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>แอดมินกรอกข้อมูลเอง</span>
                 </button>
               </div>
-            </form>
+            </div>
+
+            {/* Mode 1: Invite Link */}
+            {riderAddMode === "INVITE" ? (
+              <div className="p-6 space-y-4">
+                <div className="bg-red-50/70 border border-red-200/80 rounded-2xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[#b90000]">
+                    <Sparkles className="w-4 h-4 fill-[#b90000]" />
+                    <span>ส่งลิงก์การสมัครให้พนักงานส่งของกรอกเอง</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    คัดลอกลิงก์การสมัครส่งให้ผู้ที่จะมาร่วมทีมส่งสินค้าทาง LINE หรือแชท เพื่อให้เขากรอกข้อมูล ชื่อ เบอร์โทร และข้อมูลรถ/เลขทะเบียนด้วยตนเอง
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                    ลิงก์สำหรับสมัครเป็น Rider:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={typeof window !== "undefined" ? `${window.location.origin}/register/rider?invite=RIDER_INVITE` : "/register/rider?invite=RIDER_INVITE"}
+                      className="flex-1 bg-gray-50 border border-gray-300 rounded-xl px-3.5 py-2.5 text-xs text-gray-800 font-mono select-all focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyInviteLink("rider")}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer ${
+                        copiedLink
+                          ? "bg-emerald-600 text-white"
+                          : "bg-[#b90000] hover:bg-red-800 text-white active:scale-95"
+                      }`}
+                    >
+                      {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                      <span>{copiedLink ? "คัดลอกแล้ว!" : "คัดลอกลิงก์"}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between border-t border-gray-100 text-xs">
+                  <span className="text-gray-400">
+                    * เมื่อไรเดอร์ลงทะเบียนเสร็จ รายชื่อจะมาแสดงในระบบส่งของทันที
+                  </span>
+                  <a
+                    href="/register/rider?invite=RIDER_INVITE"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#b90000] font-bold hover:underline flex items-center gap-1 shrink-0 ml-2"
+                  >
+                    <span>เปิดดูหน้าฟอร์ม</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingRider(false)}
+                    className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    ปิดหน้าต่าง
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Mode 2: Direct Form */
+              <form onSubmit={handleCreateRiderSubmit} className="p-6 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      ไอดี Rider (Username) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      required
+                      placeholder="เช่น rider01"
+                      className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      รหัสผ่าน (Password) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      required
+                      placeholder="ตั้งรหัสผ่านเริ่มต้น"
+                      className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    ชื่อ-นามสกุล พนักงานส่ง <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    required
+                    placeholder="กรอกชื่อ-นามสกุลพนักงานส่งของ"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    เบอร์โทรศัพท์ <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    required
+                    placeholder="กรอกเบอร์โทรศัพท์พนักงานส่งของ"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      ยานพาหนะ (Drop-down) <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="vehicleType"
+                      defaultValue="รถจักรยานยนต์ (มอเตอร์ไซค์)"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white cursor-pointer"
+                    >
+                      <option value="รถจักรยานยนต์ (มอเตอร์ไซค์)">🛵 รถจักรยานยนต์ (มอเตอร์ไซค์)</option>
+                      <option value="รถกระบะ / รถบรรทุกเล็ก">🛻 รถกระบะ / รถบรรทุกเล็ก</option>
+                      <option value="รถยนต์ส่วนบุคคล">🚗 รถยนต์ส่วนบุคคล</option>
+                      <option value="รถสามล้อ / ซาเล้ง">🛺 รถสามล้อ / ซาเล้ง</option>
+                      <option value="อื่นๆ">📦 อื่นๆ</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      ป้ายทะเบียนรถ
+                    </label>
+                    <input
+                      type="text"
+                      name="plateNumber"
+                      placeholder="เช่น 1กข 1234 เชียงใหม่"
+                      className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    สถานะเริ่มต้น
+                  </label>
+                  <select
+                    name="status"
+                    defaultValue="AVAILABLE"
+                    className="w-full border border-gray-300 rounded-lg px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#b90000] focus:border-transparent bg-white"
+                  >
+                    <option value="AVAILABLE">🟢 พร้อมรับงาน (Available)</option>
+                    <option value="BUSY">🟠 กำลังวิ่งงาน (Busy)</option>
+                    <option value="OFFLINE">⚪ พักงาน (Offline)</option>
+                  </select>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingRider(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-[#b90000] hover:bg-red-800 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? "กำลังบันทึก..." : "เพิ่มพนักงานส่งทันที"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

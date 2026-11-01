@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
 
 // 1. Assign a rider to an order
 export async function assignRiderToOrder(orderId: string, riderId: string) {
@@ -263,7 +264,11 @@ export async function createRider(formData: FormData) {
   try {
     const name = formData.get("name")?.toString().trim();
     const phone = formData.get("phone")?.toString().trim();
-    const vehicle = formData.get("vehicle")?.toString().trim() || null;
+    const username = formData.get("username")?.toString().trim() || null;
+    const password = formData.get("password")?.toString().trim() || null;
+    const vehicleType = formData.get("vehicleType")?.toString().trim() || "รถจักรยานยนต์ (มอเตอร์ไซค์)";
+    const plateNumber = formData.get("plateNumber")?.toString().trim() || null;
+    const vehicle = plateNumber ? `${vehicleType} (${plateNumber})` : (formData.get("vehicle")?.toString().trim() || vehicleType);
     const status = formData.get("status")?.toString().trim() || "AVAILABLE";
 
     if (!name || !phone) {
@@ -275,11 +280,28 @@ export async function createRider(formData: FormData) {
       return { error: "เบอร์โทรศัพท์นี้มีในระบบแล้ว" };
     }
 
+    if (username) {
+      const existingUser = await prisma.rider.findFirst({ where: { username } });
+      if (existingUser) {
+        return { error: `Username "${username}" นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่น` };
+      }
+    }
+
+    let hashedPassword = null;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
     await prisma.rider.create({
       data: {
+        username,
+        password: hashedPassword,
+        plainPassword: password,
         name,
         phone,
         vehicle,
+        vehicleType,
+        plateNumber,
         status,
       },
     });
@@ -319,7 +341,11 @@ export async function updateRiderInfo(formData: FormData) {
     const id = formData.get("id")?.toString().trim();
     const name = formData.get("name")?.toString().trim();
     const phone = formData.get("phone")?.toString().trim();
-    const vehicle = formData.get("vehicle")?.toString().trim() || null;
+    const username = formData.get("username")?.toString().trim() || null;
+    const password = formData.get("password")?.toString().trim() || null;
+    const vehicleType = formData.get("vehicleType")?.toString().trim() || "รถจักรยานยนต์ (มอเตอร์ไซค์)";
+    const plateNumber = formData.get("plateNumber")?.toString().trim() || null;
+    const vehicle = plateNumber ? `${vehicleType} (${plateNumber})` : (formData.get("vehicle")?.toString().trim() || vehicleType);
     const status = formData.get("status")?.toString().trim() || "AVAILABLE";
 
     if (!id || !name || !phone) {
@@ -337,14 +363,39 @@ export async function updateRiderInfo(formData: FormData) {
       return { error: "เบอร์โทรศัพท์นี้ถูกใช้งานโดยพนักงานคนอื่นแล้ว" };
     }
 
+    if (username) {
+      const existingUser = await prisma.rider.findFirst({
+        where: {
+          username,
+          NOT: { id },
+        },
+      });
+      if (existingUser) {
+        return { error: `Username "${username}" นี้ถูกใช้งานแล้ว` };
+      }
+    }
+
+    const dataToUpdate: any = {
+      name,
+      phone,
+      vehicle,
+      vehicleType,
+      plateNumber,
+      status,
+    };
+
+    if (username !== null && username !== undefined) {
+      dataToUpdate.username = username;
+    }
+
+    if (password) {
+      dataToUpdate.password = await bcrypt.hash(password, 10);
+      dataToUpdate.plainPassword = password;
+    }
+
     await prisma.rider.update({
       where: { id },
-      data: {
-        name,
-        phone,
-        vehicle,
-        status,
-      },
+      data: dataToUpdate,
     });
 
     revalidatePath("/admin/delivery");

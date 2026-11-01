@@ -62,6 +62,7 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   orders        Order[]
+  chatMessages  ChatMessage[]
 }
 
 model Order {
@@ -109,9 +110,14 @@ model Order {
 
 model Rider {
   id            String   @id @default(cuid())
+  username      String?
+  password      String?
+  plainPassword String?
   name          String
   phone         String   @unique
   vehicle       String?
+  vehicleType   String?  @default("รถจักรยานยนต์ (มอเตอร์ไซค์)")
+  plateNumber   String?  // ป้ายทะเบียนรถ
   status        String   @default("AVAILABLE") // AVAILABLE, BUSY, OFFLINE
   rating        Float    @default(5.0)
   completedJobs Int      @default(0)
@@ -205,4 +211,22 @@ model Promotion {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 }
+
+model ChatMessage {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestId    String?
+  guestName  String?
+  guestPhone String?
+  sender     String   // "CUSTOMER" or "STORE"
+  text       String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([guestId])
+}
+
 

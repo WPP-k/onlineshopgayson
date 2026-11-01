@@ -16,8 +16,8 @@ import {
 } from "lucide-react";
 
 export const metadata = {
-  title: "🌐 ศูนย์รวมทางเข้าระบบแบ่งตามบทบาท (Admin, User, Rider) | ร้านเกษรบ้านป่าเวียง",
-  description: "ทางเข้าใช้งานระบบพร้อมกันสำหรับลูกค้า แอดมิน และไรเดอร์ ร้านเกษรบ้านป่าเวียง",
+  title: "🌐 ศูนย์รวมทางเข้าระบบแบ่งตามบทบาท (Admin, User, Rider)",
+  description: "ทางเข้าใช้งานระบบพร้อมกันสำหรับลูกค้า แอดมิน และไรเดอร์ onlineshop",
 };
 
 export default function PortalPage() {

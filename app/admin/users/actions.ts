@@ -245,3 +245,101 @@ export async function deleteAdmin(formData: FormData) {
     return { error: error.message || "เกิดข้อผิดพลาดในการลบ Admin" };
   }
 }
+
+export async function registerAdminByInvite(formData: FormData) {
+  const username = (formData.get("username") as string)?.trim();
+  const password = (formData.get("password") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim() || null;
+  const phone = (formData.get("phone") as string)?.trim() || null;
+
+  if (!username || !password) {
+    return { error: "กรุณาระบุไอดีผู้ดูแลระบบ (Username) และรหัสผ่าน" };
+  }
+
+  try {
+    const [existingAdmin, existingUser] = await Promise.all([
+      prisma.admin.findUnique({ where: { username } }),
+      prisma.user.findUnique({ where: { username } }),
+    ]);
+
+    if (existingAdmin || existingUser) {
+      return { error: "ชื่อผู้ใช้นี้มีอยู่ในระบบแล้ว กรุณาเลือกชื่ออื่น" };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newAdmin = await prisma.admin.create({
+      data: {
+        username,
+        password: hashedPassword,
+        plainPassword: password,
+        name,
+        phone,
+        role: "ADMIN",
+      },
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true, admin: { id: newAdmin.id, name: newAdmin.name, username: newAdmin.username } };
+  } catch (error: any) {
+    console.error("Register admin by invite error:", error);
+    return { error: error.message || "เกิดข้อผิดพลาดในการลงทะเบียนผู้ดูแลระบบ" };
+  }
+}
+
+export async function registerRiderByInvite(formData: FormData) {
+  const username = (formData.get("username") as string)?.trim() || null;
+  const password = (formData.get("password") as string)?.trim() || null;
+  const name = (formData.get("name") as string)?.trim();
+  const phone = (formData.get("phone") as string)?.trim();
+  const vehicleType = (formData.get("vehicleType") as string)?.trim() || "รถจักรยานยนต์ (มอเตอร์ไซค์)";
+  const plateNumber = (formData.get("plateNumber") as string)?.trim() || null;
+  const vehicle = plateNumber ? `${vehicleType} (${plateNumber})` : vehicleType;
+
+  if (!name || !phone) {
+    return { error: "กรุณาระบุชื่อ-นามสกุล และเบอร์โทรศัพท์" };
+  }
+
+  try {
+    const existing = await prisma.rider.findUnique({ where: { phone } });
+    if (existing) {
+      return { error: `เบอร์โทรศัพท์ ${phone} นี้ถูกลงทะเบียนเป็นพนักงานส่งสินค้าไว้แล้ว` };
+    }
+
+    if (username) {
+      const existingUser = await prisma.rider.findFirst({ where: { username } });
+      if (existingUser) {
+        return { error: `Username "${username}" นี้ถูกใช้งานแล้ว กรุณาเลือกชื่ออื่น` };
+      }
+    }
+
+    let hashedPassword = null;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    const newRider = await prisma.rider.create({
+      data: {
+        username,
+        password: hashedPassword,
+        plainPassword: password,
+        name,
+        phone,
+        vehicle,
+        vehicleType,
+        plateNumber,
+        status: "AVAILABLE",
+      },
+    });
+
+    revalidatePath("/admin/users");
+    revalidatePath("/admin/delivery");
+    revalidatePath("/rider");
+
+    return { success: true, rider: { id: newRider.id, name: newRider.name, phone: newRider.phone } };
+  } catch (error: any) {
+    console.error("Register rider by invite error:", error);
+    return { error: error.message || "เกิดข้อผิดพลาดในการลงทะเบียนพนักงานส่งสินค้า" };
+  }
+}
+

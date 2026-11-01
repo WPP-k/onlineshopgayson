@@ -41,8 +41,12 @@ export default async function AdminUsersPage() {
   const riders = rawRiders.map((r) => ({
     id: r.id,
     name: r.name,
+    username: r.username,
+    plainPassword: r.plainPassword,
     phone: r.phone,
     vehicle: r.vehicle,
+    vehicleType: r.vehicleType,
+    plateNumber: r.plateNumber,
     status: r.status,
     rating: r.rating,
     completedJobs: r.completedJobs,

@@ -10,8 +10,11 @@ import { AdminSidebarNav } from './AdminSidebarNav';
 import { AdminSidebarFooter } from './AdminSidebarFooter';
 
 export const metadata = {
-  title: "⚙️ [Admin] ระบบจัดการร้านค้า",
-  description: "ระบบจัดการร้านเกษรบ้านป่าเวียง",
+  title: {
+    template: "%s | onlineshop",
+    default: "⚙️ [Admin] ระบบจัดการร้านค้า | onlineshop",
+  },
+  description: "ระบบจัดการ onlineshop",
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

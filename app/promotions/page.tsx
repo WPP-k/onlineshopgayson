@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, Sparkles, Tag, Flame } from "lucide-react";
 
 export const metadata = {
-  title: "สินค้าโปรโมชัน & ลดราคาพิเศษ | ร้านเกษรบ้านป่าเวียง",
-  description: "รวมรายการสินค้าโปรโมชัน ซื้อ 1 แถม 1, ซื้อ 2 แถม 1 และลดราคาพิเศษ จากร้านเกษรบ้านป่าเวียง",
+  title: "สินค้าโปรโมชัน & ลดราคาพิเศษ",
+  description: "รวมรายการสินค้าโปรโมชัน ซื้อ 1 แถม 1, ซื้อ 2 แถม 1 และลดราคาพิเศษ จาก onlineshop",
 };
 
 export const dynamic = "force-dynamic";

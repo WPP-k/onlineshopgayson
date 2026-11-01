@@ -32,8 +32,8 @@ export interface CustomerOrderPin {
   customerName: string;
   customerPhone?: string;
   shippingAddress: string;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number | null | undefined;
+  longitude: number | null | undefined;
   distanceKm?: number | null;
   totalAmount: number;
   deliveryStatus: string; // PENDING, ASSIGNED, DELIVERING, DELIVERED, CANCELLED

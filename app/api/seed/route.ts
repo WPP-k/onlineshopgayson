@@ -10,7 +10,7 @@ export async function GET() {
     const scriptPath = path.join(process.cwd(), 'scripts', 'restore-products-promotions.js');
 
     await new Promise((resolve, reject) => {
-      exec(`node "${scriptPath}"`, (err, stdout, stderr) => {
+      exec(`node "${scriptPath}"`, (err: any, stdout: any, stderr: any) => {
         if (err) return reject(err);
         resolve(stdout);
       });

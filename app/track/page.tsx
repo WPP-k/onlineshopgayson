@@ -9,8 +9,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-key-for-mvp";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "ติดตามสถานะการจัดส่งสินค้า | ร้านเกษรบ้านป่าเวียง",
-  description: "ระบบติดตามสถานะการจัดส่งพัสดุและสินค้าแบบเรียลไทม์ ร้านเกษรบ้านป่าเวียง",
+  title: "ติดตามสถานะการจัดส่งสินค้า",
+  description: "ระบบติดตามสถานะการจัดส่งพัสดุและสินค้าแบบเรียลไทม์ onlineshop",
 };
 
 function serializeOrder(o: any) {

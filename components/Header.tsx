@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Search, ShoppingCart, CheckCircle2, ChevronDown, ShoppingBag, ShieldCheck, LogOut, Truck, Flame } from "lucide-react";
+import { User, Search, ShoppingCart, CheckCircle2, ChevronDown, ShoppingBag, ShieldCheck, LogOut, Truck, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -101,26 +101,6 @@ export function Header() {
 
           {/* Auth & Shopping Cart */}
           <div className="shrink-0 flex items-center gap-2.5 md:gap-4 md:pr-4 order-2 md:order-3">
-            {/* Promo Link */}
-            <Link
-              href="/#promotions"
-              className="flex items-center gap-1.5 text-xs font-bold text-amber-200 bg-amber-400/20 hover:bg-amber-400/30 px-3 py-1.5 rounded-full transition-all border border-amber-300/30 shadow-2xs shrink-0"
-              title="ดูสินค้าโปรโมชันและลดราคาพิเศษ"
-            >
-              <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span className="hidden sm:inline">โปรโมชัน</span>
-            </Link>
-
-            {/* Track Order Link */}
-            <Link
-              href="/track"
-              className="flex items-center gap-1.5 text-xs font-bold text-white bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-full transition-all border border-white/20 shadow-2xs shrink-0"
-              title="ติดตามสถานะการจัดส่งพัสดุ"
-            >
-              <Truck className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">ติดตามพัสดุ</span>
-            </Link>
-
             {/* Auth Section with Dropdown */}
             {user ? (
               <div className="relative" ref={dropdownRef}>
@@ -198,17 +178,30 @@ export function Header() {
                         <span>ประวัติการสั่งซื้อ</span>
                       </Link>
 
-                      {/* Menu 3: ติดตามสถานะจัดส่ง */}
+                      {/* Menu 3: ติดตามพัสดุ */}
                       <Link
                         href="/track"
                         onClick={() => setIsUserDropdownOpen(false)}
                         className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-red-50 hover:text-[#b90000] rounded-xl transition-colors"
                       >
                         <Truck className="w-4 h-4 text-gray-400 group-hover:text-[#b90000]" />
-                        <span>ติดตามสถานะจัดส่งสินค้า</span>
+                        <span>ติดตามพัสดุ</span>
                       </Link>
 
-                      {/* Menu 3 (Admin Only) */}
+                      {/* Menu 4: แชทกับร้าน */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsUserDropdownOpen(false);
+                          window.dispatchEvent(new CustomEvent('open-chat-widget'));
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-red-50 hover:text-[#b90000] rounded-xl transition-colors text-left cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4 text-gray-400 group-hover:text-[#b90000]" />
+                        <span>แชทกับร้าน</span>
+                      </button>
+
+                      {/* Menu 5 (Admin Only) */}
                       {user.role === 'ADMIN' && (
                         <Link
                           href="/admin"
@@ -239,15 +232,71 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <Link href="/login" className="flex items-center gap-2 hover:text-white/80 transition-colors">
-                <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center border border-white/30">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="flex flex-col hidden sm:flex">
-                  <span className="text-xs font-semibold leading-tight">เข้าสู่ระบบ</span>
-                  <span className="text-[10px] text-white/80 leading-tight">สมัครสมาชิก</span>
-                </div>
-              </Link>
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsUserDropdownOpen((prev) => !prev)}
+                  className="flex items-center gap-2 p-1 rounded-2xl hover:bg-red-800/60 transition-all cursor-pointer select-none text-left"
+                >
+                  <div className="w-8 h-8 rounded-full bg-red-700 text-white flex items-center justify-center border border-white/30">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col hidden sm:flex leading-tight">
+                    <span className="text-xs font-semibold leading-tight flex items-center gap-0.5">
+                      เข้าสู่ระบบ
+                      <ChevronDown className="w-3 h-3 text-white/80" />
+                    </span>
+                    <span className="text-[10px] text-white/80 leading-tight">สมัครสมาชิก</span>
+                  </div>
+                </button>
+
+                {isUserDropdownOpen && (
+                  <div className="absolute right-0 mt-2.5 w-60 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 text-gray-800 animate-in fade-in zoom-in-95 duration-150">
+                    <div className="p-2 space-y-1">
+                      <Link
+                        href="/login"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-white bg-[#b90000] hover:bg-red-800 rounded-xl transition-colors justify-center shadow-xs"
+                      >
+                        <User className="w-4 h-4" />
+                        <span>เข้าสู่ระบบ</span>
+                      </Link>
+                      <Link
+                        href="/register"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-100 rounded-xl transition-colors justify-center"
+                      >
+                        <span>ยังไม่มีบัญชี? สมัครสมาชิก</span>
+                      </Link>
+                      
+                      <div className="my-1.5 border-t border-gray-100" />
+                      
+                      {/* Menu: ติดตามพัสดุ */}
+                      <Link
+                        href="/track"
+                        onClick={() => setIsUserDropdownOpen(false)}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-red-50 hover:text-[#b90000] rounded-xl transition-colors"
+                      >
+                        <Truck className="w-4 h-4 text-gray-400" />
+                        <span>ติดตามพัสดุ</span>
+                      </Link>
+
+                      {/* Menu: แชทกับร้าน */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsUserDropdownOpen(false);
+                          window.dispatchEvent(new CustomEvent('open-chat-widget'));
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 text-xs font-medium text-gray-700 hover:bg-red-50 hover:text-[#b90000] rounded-xl transition-colors text-left cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4 text-gray-400" />
+                        <span>แชทกับร้าน</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Shopping Cart */}
